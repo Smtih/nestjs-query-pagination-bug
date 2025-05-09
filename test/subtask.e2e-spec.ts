@@ -22,11 +22,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   // Clear the database before each test
-  const entities = dataSource.entityMetadatas;
-  for (const entity of entities) {
-    const repository = dataSource.getRepository(entity.name);
-    await repository.clear();
-  }
+  await dataSource.query('TRUNCATE TABLE "sub_task", "todo_item" CASCADE');
 });
 
 afterAll(async () => {
@@ -35,12 +31,37 @@ afterAll(async () => {
 
 describe('SubTask GraphQL Operations (e2e)', () => {
   it('should create a subtask', async () => {
+    // First create a todo item
+    await apolloServer.executeOperation({
+      query: `
+        mutation CreateTodoItem($input: CreateOneTodoItemInput!) {
+          createOneTodoItem(input: $input) {
+            id
+            title
+          }
+        }
+      `,
+      variables: {
+        input: {
+          todoItem: {
+            id: '1',
+            title: 'Test Todo',
+          },
+        },
+      },
+    });
+
     const createResponse = await apolloServer.executeOperation({
       query: `
         mutation CreateSubTask($input: CreateOneSubTaskInput!) {
           createOneSubTask(input: $input) {
             id
-            name
+            title
+            todoItemId
+            todoItem {
+              id
+              title
+            }
           }
         }
       `,
@@ -48,7 +69,8 @@ describe('SubTask GraphQL Operations (e2e)', () => {
         input: {
           subTask: {
             id: '1',
-            name: 'Test SubTask',
+            title: 'Test SubTask',
+            todoItemId: '1',
           },
         },
       },
@@ -63,18 +85,44 @@ describe('SubTask GraphQL Operations (e2e)', () => {
     expect(createData).toBeDefined();
     expect(createData?.createOneSubTask).toEqual({
       id: '1',
-      name: 'Test SubTask',
+      title: 'Test SubTask',
+      todoItemId: '1',
+      todoItem: {
+        id: '1',
+        title: 'Test Todo',
+      },
     });
   });
 
   it('should read a subtask', async () => {
-    // First create a subtask
+    // First create a todo item
+    await apolloServer.executeOperation({
+      query: `
+        mutation CreateTodoItem($input: CreateOneTodoItemInput!) {
+          createOneTodoItem(input: $input) {
+            id
+            title
+          }
+        }
+      `,
+      variables: {
+        input: {
+          todoItem: {
+            id: '1',
+            title: 'Test Todo',
+          },
+        },
+      },
+    });
+
+    // Then create a subtask
     await apolloServer.executeOperation({
       query: `
         mutation CreateSubTask($input: CreateOneSubTaskInput!) {
           createOneSubTask(input: $input) {
             id
-            name
+            title
+            todoItemId
           }
         }
       `,
@@ -82,7 +130,8 @@ describe('SubTask GraphQL Operations (e2e)', () => {
         input: {
           subTask: {
             id: '1',
-            name: 'Test SubTask',
+            title: 'Test SubTask',
+            todoItemId: '1',
           },
         },
       },
@@ -94,7 +143,12 @@ describe('SubTask GraphQL Operations (e2e)', () => {
         query GetSubTask($id: ID!) {
           subTask(id: $id) {
             id
-            name
+            title
+            todoItemId
+            todoItem {
+              id
+              title
+            }
           }
         }
       `,
@@ -112,7 +166,12 @@ describe('SubTask GraphQL Operations (e2e)', () => {
     expect(readData).toBeDefined();
     expect(readData?.subTask).toEqual({
       id: '1',
-      name: 'Test SubTask',
+      title: 'Test SubTask',
+      todoItemId: '1',
+      todoItem: {
+        id: '1',
+        title: 'Test Todo',
+      },
     });
   });
 });

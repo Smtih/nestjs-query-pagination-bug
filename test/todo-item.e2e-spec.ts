@@ -22,11 +22,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   // Clear the database before each test
-  const entities = dataSource.entityMetadatas;
-  for (const entity of entities) {
-    const repository = dataSource.getRepository(entity.name);
-    await repository.clear();
-  }
+  await dataSource.query('TRUNCATE TABLE "sub_task", "todo_item" CASCADE');
 });
 
 afterAll(async () => {
@@ -113,6 +109,125 @@ describe('TodoItem GraphQL Operations (e2e)', () => {
     expect(readData?.todoItem).toEqual({
       id: '1',
       title: 'Test Todo',
+    });
+  });
+
+  it('should create a todo item with subtasks and read them back', async () => {
+    // First create a todo item
+    await apolloServer.executeOperation({
+      query: `
+        mutation CreateTodoItem($input: CreateOneTodoItemInput!) {
+          createOneTodoItem(input: $input) {
+            id
+            title
+          }
+        }
+      `,
+      variables: {
+        input: {
+          todoItem: {
+            id: '1',
+            title: 'Test Todo with SubTasks',
+          },
+        },
+      },
+    });
+
+    // Then create subtasks for it
+    await apolloServer.executeOperation({
+      query: `
+        mutation CreateSubTask($input: CreateOneSubTaskInput!) {
+          createOneSubTask(input: $input) {
+            id
+            title
+            todoItemId
+          }
+        }
+      `,
+      variables: {
+        input: {
+          subTask: {
+            id: '1',
+            title: 'First SubTask',
+            todoItemId: '1',
+          },
+        },
+      },
+    });
+
+    await apolloServer.executeOperation({
+      query: `
+        mutation CreateSubTask($input: CreateOneSubTaskInput!) {
+          createOneSubTask(input: $input) {
+            id
+            title
+            todoItemId
+          }
+        }
+      `,
+      variables: {
+        input: {
+          subTask: {
+            id: '2',
+            title: 'Second SubTask',
+            todoItemId: '1',
+          },
+        },
+      },
+    });
+
+    // Read back the todo item with its subtasks
+    const readResponse = await apolloServer.executeOperation({
+      query: `
+        query GetTodoItemWithSubTasks($id: ID!) {
+          todoItem(id: $id) {
+            id
+            title
+            subTasks {
+              edges {
+                node {
+                  id
+                  title
+                  todoItemId
+                }
+              }
+            }
+          }
+        }
+      `,
+      variables: {
+        id: '1',
+      },
+    });
+
+    const readData =
+      readResponse.body.kind === 'single'
+        ? readResponse.body.singleResult.data
+        : null;
+
+    expect(readResponse.body.kind).toBe('single');
+    expect(readData).toBeDefined();
+    expect(readData?.todoItem).toEqual({
+      id: '1',
+      title: 'Test Todo with SubTasks',
+      subTasks: {
+        edges: [
+          {
+            node: {
+              id: '1',
+              title: 'First SubTask',
+              todoItemId: '1',
+            },
+          },
+          {
+            node: {
+              id: '2',
+              title: 'Second SubTask',
+              todoItemId: '1',
+            },
+          },
+        ],
+      },
     });
   });
 });

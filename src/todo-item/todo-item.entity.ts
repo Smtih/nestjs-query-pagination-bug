@@ -1,9 +1,15 @@
-import { IDField, FilterableField } from '@ptc-org/nestjs-query-graphql';
+import {
+  IDField,
+  FilterableField,
+  FilterableCursorConnection,
+} from '@ptc-org/nestjs-query-graphql';
 import { ID, ObjectType } from '@nestjs/graphql';
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn, OneToMany } from 'typeorm';
+import { SubTask } from '../subtask/subtask.entity';
 
 @Entity()
 @ObjectType()
+@FilterableCursorConnection('subTasks', () => SubTask)
 export class TodoItem {
   @IDField(() => ID)
   @PrimaryColumn()
@@ -12,4 +18,7 @@ export class TodoItem {
   @FilterableField()
   @Column()
   title!: string;
+
+  @OneToMany(() => SubTask, (subTask) => subTask.todoItem)
+  subTasks!: SubTask[];
 }
