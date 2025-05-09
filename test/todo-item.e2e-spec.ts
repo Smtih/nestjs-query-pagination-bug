@@ -3,9 +3,11 @@ import { AppModule } from '../src/app.module';
 import { getApolloServer } from '@nestjs/apollo';
 import { ApolloServer, BaseContext } from '@apollo/server';
 import { INestApplication } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 
 let apolloServer: ApolloServer<BaseContext>;
 let app: INestApplication;
+let dataSource: DataSource;
 
 beforeAll(async () => {
   const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -15,6 +17,16 @@ beforeAll(async () => {
   app = moduleFixture.createNestApplication();
   await app.init();
   apolloServer = getApolloServer(app);
+  dataSource = moduleFixture.get<DataSource>(DataSource);
+});
+
+beforeEach(async () => {
+  // Clear the database before each test
+  const entities = dataSource.entityMetadatas;
+  for (const entity of entities) {
+    const repository = dataSource.getRepository(entity.name);
+    await repository.clear();
+  }
 });
 
 afterAll(async () => {
@@ -56,6 +68,27 @@ describe('TodoItem GraphQL Operations (e2e)', () => {
   });
 
   it('should read a todo item', async () => {
+    // First create a todo item
+    await apolloServer.executeOperation({
+      query: `
+        mutation CreateTodoItem($input: CreateOneTodoItemInput!) {
+          createOneTodoItem(input: $input) {
+            id
+            title
+          }
+        }
+      `,
+      variables: {
+        input: {
+          todoItem: {
+            id: '1',
+            title: 'Test Todo',
+          },
+        },
+      },
+    });
+
+    // Then read it back
     const readResponse = await apolloServer.executeOperation({
       query: `
         query GetTodoItem($id: ID!) {

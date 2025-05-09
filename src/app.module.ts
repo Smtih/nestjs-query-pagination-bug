@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TodoItemModule } from './todo-item/todo-item.module';
+import { SubTaskModule } from './subtask/subtask.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TodoItemModule } from './todo-item/todo-item.module';
       autoSchemaFile: true,
     }),
     TodoItemModule,
+    SubTaskModule,
   ],
 })
 export class AppModule {}
