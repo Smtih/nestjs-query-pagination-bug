@@ -4,6 +4,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TodoItemModule } from './todo-item/todo-item.module';
 import { SubTaskModule } from './subtask/subtask.module';
+import { TagModule } from './tag/tag.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SubTaskModule } from './subtask/subtask.module';
     }),
     TodoItemModule,
     SubTaskModule,
+    TagModule,
   ],
 })
 export class AppModule {}
