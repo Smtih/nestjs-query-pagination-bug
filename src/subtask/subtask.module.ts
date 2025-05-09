@@ -11,6 +11,7 @@ import { SubTask } from './subtask.entity';
         {
           DTOClass: SubTask,
           EntityClass: SubTask,
+          enableTotalCount: true,
         },
       ],
     }),

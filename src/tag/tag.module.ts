@@ -11,6 +11,7 @@ import { Tag } from './tag.entity';
         {
           DTOClass: Tag,
           EntityClass: Tag,
+          enableTotalCount: true,
         },
       ],
     }),

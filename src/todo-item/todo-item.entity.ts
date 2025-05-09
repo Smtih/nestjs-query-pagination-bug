@@ -2,6 +2,7 @@ import {
   IDField,
   FilterableField,
   FilterableCursorConnection,
+  QueryOptions,
 } from '@ptc-org/nestjs-query-graphql';
 import { ID, ObjectType } from '@nestjs/graphql';
 import { Column, Entity, PrimaryColumn, OneToMany } from 'typeorm';
@@ -12,6 +13,7 @@ import { Tag } from '../tag/tag.entity';
 @ObjectType()
 @FilterableCursorConnection('subTasks', () => SubTask)
 @FilterableCursorConnection('tags', () => Tag)
+@QueryOptions({ filterDepth: Number.POSITIVE_INFINITY })
 export class TodoItem {
   @IDField(() => ID)
   @PrimaryColumn()

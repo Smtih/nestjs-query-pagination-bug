@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TodoItemModule } from './todo-item/todo-item.module';
 import { SubTaskModule } from './subtask/subtask.module';
 import { TagModule } from './tag/tag.module';
+import * as path from 'path';
 
 @Module({
   imports: [
@@ -21,8 +22,7 @@ import { TagModule } from './tag/tag.module';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      // set to true to automatically generate schema
-      autoSchemaFile: true,
+      autoSchemaFile: path.join(process.cwd(), 'schema.temp.graphql'),
     }),
     TodoItemModule,
     SubTaskModule,

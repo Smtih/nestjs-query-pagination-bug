@@ -11,6 +11,7 @@ import { TodoItem } from './todo-item.entity';
         {
           EntityClass: TodoItem,
           DTOClass: TodoItem,
+          enableTotalCount: true,
         },
       ],
     }),
